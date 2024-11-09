@@ -1,0 +1,39 @@
+﻿@page "/"
+@inject NavigationManager Navigation
+
+<PageTitle>Home</PageTitle>
+
+<div class="hero-section">
+    <h1 class="app-title">Welcome to Till App</h1>
+    <p class="app-description">Easily manage your orders, track products, and streamline your point-of-sale experience.</p>
+    <button class="cta-button" @onclick="NavigateToNewOrder">Get Started</button>
+</div>
+
+<div class="features-section">
+    <h2 class="features-title">Features</h2>
+    <div class="features-list">
+        <div class="feature-card">
+            <span class="feature-icon">📝</span>
+            <h3>New Order</h3>
+            <p>Create a new order quickly and easily.</p>
+            <button class="feature-button" @onclick="NavigateToNewOrder">Create Order</button>
+        </div>
+        <div class="feature-card">
+            <span class="feature-icon">📋</span>
+            <h3>Order List</h3>
+            <p>View and manage all unpaid orders in one place.</p>
+            <button class="feature-button" @onclick="NavigateToOrderList">View Orders</button>
+        </div>
+        <div class="feature-card">
+            <span class="feature-icon">📦</span>
+            <h3>Products</h3>
+            <p>Browse and manage available products.</p>
+            <button class="feature-button">Browse Products</button>
+        </div>
+    </div>
+</div>
+
+@code {
+    private void NavigateToNewOrder() => Navigation.NavigateTo("/neworder");
+    private void NavigateToOrderList() => Navigation.NavigateTo("/orderlist");
+}

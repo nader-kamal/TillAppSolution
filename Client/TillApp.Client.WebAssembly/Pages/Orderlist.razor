@@ -1,0 +1,42 @@
+﻿@page "/orderlist"
+@using TillApp.Shared.Entities
+@using TillApp.Shared.Services
+@inject OrderService OrderService
+
+<h3 class="page-title">Unpaid Orders</h3>
+
+@if (UnpaidOrders.Count == 0)
+{
+    <p class="no-orders-message">🎉 All orders are paid! No unpaid orders available.</p>
+}
+else
+{
+    <div class="order-list">
+        @foreach (var order in UnpaidOrders)
+        {
+            <div class="order-card">
+                <div class="order-info">
+                    <h4>@order.OrderName</h4>
+                    <p>Amount: <span class="order-amount">@order.Amount.ToString("C")</span></p>
+                </div>
+                <button class="mark-paid-button" @onclick="() => MarkAsPaid(order.OrderID)">Mark as Paid</button>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private List<OrderDto> UnpaidOrders = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        UnpaidOrders = await OrderService.GetUnpaidOrdersAsync();
+    }
+
+    private async Task MarkAsPaid(int orderId)
+    {
+        await OrderService.MarkOrderAsPaidAsync(orderId);
+
+        UnpaidOrders.RemoveAll(o => o.OrderID == orderId);
+    }
+}

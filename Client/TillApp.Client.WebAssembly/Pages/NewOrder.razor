@@ -1,0 +1,132 @@
+﻿@page "/neworder"
+@using TillApp.Shared.Entities
+@using TillApp.Shared.Services
+@inject OrderService OrderService
+@inject NavigationManager Navigation
+
+<h3 class="order-heading">New Order</h3>
+<div class="order-form">
+    <label for="orderName" class="input-label">Order Name</label>
+    <input @bind="OrderName" id="orderName" class="order-input" placeholder="Enter order name..." />
+</div>
+
+<!-- Display validation message for OrderName -->
+@if (showOrderNameError)
+{
+    <p class="error-message">
+        <span class="error-icon">⚠️</span> Order name is required.
+    </p>
+}
+
+
+<!-- Display products in a grid layout with two rows -->
+<div class="product-grid">
+    @foreach (var product in Products)
+    {
+        <div class="product-box" @onclick="() => AddItem(product)">
+            <h4>@product.Name</h4>
+            <p>@product.Price.ToString("C")</p>
+        </div>
+    }
+</div>
+
+<h4 class="section-heading">Selected Items</h4>
+
+<!-- Display validation message if no products are selected -->
+@if (showNoProductsError)
+{
+    <p class="error-message">
+        <span class="error-icon">⚠️</span> Please select at least one product for the order.
+    </p>
+}
+
+<table class="selected-items-table">
+    <thead>
+        <tr>
+            <th>Item Name</th>
+            <th>Price</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in SelectedItems)
+        {
+            <tr>
+                <td>@item.ItemName</td>
+                <td>@item.Price.ToString("C")</td>
+                <td><button class="remove-button" @onclick="() => RemoveItem(item)">🗑️ Remove</button></td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<p class="total-amount">Total: <span>@Total.ToString("C")</span></p>
+<button class="place-order-button" @onclick="PlaceOrder">Place Order</button>
+
+
+@code {
+    private string OrderName { get; set; } = string.Empty;
+    private decimal Total => SelectedItems.Sum(i => i.Price);
+    private List<ProductDto> Products = new();
+    private List<OrderItemDto> SelectedItems = new();
+
+    private bool showOrderNameError = false;
+    private bool showNoProductsError = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Fetch products from the database via API
+        Products = await OrderService.GetProductsAsync();
+    }
+
+    private void AddItem(ProductDto product)
+    {
+        SelectedItems.Add(new OrderItemDto { ItemName = product.Name, Price = product.Price });
+        showNoProductsError = false; // Clear the error if a product is added
+    }
+
+    private void RemoveItem(OrderItemDto item)
+    {
+        SelectedItems.Remove(item);
+    }
+
+    private async Task PlaceOrder()
+    {
+        // Reset validation messages
+        showOrderNameError = false;
+        showNoProductsError = false;
+
+        // Validate OrderName and SelectedItems
+        if (string.IsNullOrWhiteSpace(OrderName))
+        {
+            showOrderNameError = true;
+        }
+        if (SelectedItems.Count == 0)
+        {
+            showNoProductsError = true;
+        }
+
+        // Only proceed if there are no validation errors
+        if (showOrderNameError || showNoProductsError)
+        {
+            return;
+        }
+
+        // Create a new OrderDto with selected items
+        var order = new OrderDto
+            {
+                OrderName = OrderName,
+                Amount = Total,
+                IsPaid = false,
+                Items = SelectedItems
+            };
+
+        // Place the order with items using OrderService
+        var createdOrder = await OrderService.CreateOrderWithItemsAsync(order);
+
+        // Clear form and navigate to order list page upon successful order placement
+        OrderName = string.Empty;
+        SelectedItems.Clear();
+        Navigation.NavigateTo("/orderlist");
+    }
+}
